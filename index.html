@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ticket Authorization Flow Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --ink: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --primary: #002f6c;
+      --primary-2: #0b4ea2;
+      --ok: #0f8f4d;
+      --danger: #c81e1e;
+      --shadow: 0 14px 30px rgba(17, 24, 39, 0.12);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% -20%, #dbeafe 0%, transparent 45%),
+        radial-gradient(circle at 90% -30%, #e0e7ff 0%, transparent 50%),
+        var(--bg);
+      min-height: 100vh;
+      padding: 28px 18px 40px;
+    }
+
+    .page-title {
+      max-width: 1200px;
+      margin: 0 auto 22px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .flow-grid {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+
+    .screen-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .screen-label {
+      font-weight: 700;
+      font-size: 0.84rem;
+      color: #374151;
+      text-align: center;
+      min-height: 34px;
+    }
+
+    .phone {
+      width: 190px;
+      height: 390px;
+      border-radius: 26px;
+      background: var(--card);
+      border: 1px solid #dbe1ea;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .status {
+      height: 22px;
+      padding: 7px 12px 0;
+      font-size: 0.68rem;
+      color: #374151;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .content {
+      flex: 1;
+      overflow: auto;
+      padding: 10px;
+      background: #fafbff;
+    }
+
+    .lock-screen {
+      background:
+        linear-gradient(180deg, rgba(8, 23, 52, 0.3), rgba(8, 23, 52, 0.75)),
+        url("https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=500&q=80")
+          center / cover;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 22px;
+    }
+
+    .lock-screen .date {
+      font-size: 0.9rem;
+      opacity: 0.95;
+      margin-top: 6px;
+    }
+
+    .lock-screen .time {
+      font-size: 3rem;
+      line-height: 1;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .notification {
+      margin-top: 16px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 10px;
+      backdrop-filter: blur(3px);
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: 150ms ease;
+    }
+
+    .notification:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .dot-row {
+      margin-top: auto;
+      margin-bottom: 10px;
+      width: 34px;
+      height: 4px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.85);
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      margin-bottom: 8px;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 7px 0 6px;
+    }
+
+    .team {
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 0.04em;
+      font-size: 1.1rem;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.7rem;
+    }
+
+    .game-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.74rem;
+      margin-top: 5px;
+    }
+
+    .chip {
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      background: #eef2ff;
+      color: #1e40af;
+      border: 1px solid #dbeafe;
+      white-space: nowrap;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(180deg, var(--primary-2), var(--primary));
+      cursor: pointer;
+      width: 100%;
+      transition: 180ms ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+    }
+
+    .btn.secondary {
+      background: #f3f4f6;
+      color: #111827;
+      border: 1px solid #d1d5db;
+    }
+
+    .btn.success {
+      background: linear-gradient(180deg, #16a34a, var(--ok));
+    }
+
+    .btn.danger {
+      background: linear-gradient(180deg, #ef4444, var(--danger));
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-top: 7px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .tabs button {
+      padding: 6px;
+      border: 0;
+      font-size: 0.67rem;
+      font-weight: 700;
+      background: #f8fafc;
+      cursor: pointer;
+    }
+
+    .tabs button.active {
+      background: #fff;
+      color: var(--primary);
+      box-shadow: inset 0 0 0 1px #dbeafe;
+    }
+
+    .ticket-outline {
+      border: 1px dashed #c7d2fe;
+      border-radius: 12px;
+      height: 66px;
+      margin: 8px 0;
+      background: linear-gradient(145deg, #f8fafc, #eef2ff);
+    }
+
+    .ticket-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      text-align: center;
+      margin-bottom: 8px;
+      gap: 6px;
+    }
+
+    .metric {
+      border: 1px solid #e5e7eb;
+      border-radius: 9px;
+      padding: 4px;
+      font-size: 0.62rem;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 0.88rem;
+      color: #0f172a;
+      margin-top: 2px;
+    }
+
+    .sub-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #1f2937;
+    }
+
+    .provider-box {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .provider-pill {
+      border: 1px solid #dbeafe;
+      background: #f0f7ff;
+      color: #1e3a8a;
+      border-radius: 9px;
+      padding: 7px;
+      font-weight: 700;
+      font-size: 0.68rem;
+      text-align: center;
+    }
+
+    .qr-wrap {
+      padding: 10px 8px 8px;
+      text-align: center;
+      border: 1px solid #dbe2f0;
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .qr {
+      width: 110px;
+      height: 110px;
+      margin: 0 auto;
+      background:
+        linear-gradient(90deg, #000 10px, transparent 10px) 0 0 / 20px 20px,
+        linear-gradient(#000 10px, transparent 10px) 0 0 / 20px 20px,
+        radial-gradient(circle at 8px 8px, #000 7px, transparent 8px) 4px 4px/20px 20px,
+        #fff;
+      border: 5px solid #111827;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .qr::after {
+      content: "";
+      position: absolute;
+      inset: 35px;
+      background: linear-gradient(135deg, #003087, #0b4ea2);
+      border-radius: 2px;
+      opacity: 0.8;
+    }
+
+    .big-state {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+
+    .bottom-tab {
+      height: 38px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 3px 2px;
+      gap: 2px;
+    }
+
+    .tab-item {
+      font-size: 0.58rem;
+      text-align: center;
+      color: #6b7280;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .tab-item.active {
+      color: #1e3a8a;
+      background: #eef2ff;
+      font-weight: 700;
+    }
+
+    .face-modal {
+      width: 190px;
+      min-height: 130px;
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid #dbe2f0;
+      box-shadow: var(--shadow);
+      padding: 14px 12px;
+      text-align: center;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .face-modal.active {
+      display: block;
+    }
+
+    .face-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #d1d5db;
+      border-top-color: #1d4ed8;
+      border-radius: 50%;
+      margin: 8px auto 0;
+      animation: spin 900ms linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .controls {
+      max-width: 1200px;
+      margin: 18px auto 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .controls .btn {
+      width: auto;
+      min-width: 140px;
+      padding: 8px 12px;
+    }
+
+    .hint {
+      text-align: center;
+      color: #4b5563;
+      font-size: 0.78rem;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="page-title">A streamlined ticket authorization flow that ensures frictionless stadium entry</h1>
+
+  <section class="flow-grid">
+    <article class="screen-wrap">
+      <div class="screen-label">Lock Screen - Game Day Notification</div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>5G ▰</span></div>
+        <div class="content lock-screen">
+          <div class="date">September 7, 2026</div>
+          <div class="time">9:41</div>
+          <button class="notification" id="notifTap">
+            <strong>KC's Game Day, Amesi</strong><br />
+            You're one step away from the gate - authorize your ticket now.
+          </button>
+          <div class="dot-row"></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="screen-wrap">
+      <div class="screen-label">Home - Pre-Game</div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>◉</span></div>
+        <div class="content">
+          <div class="card hero">
+            <div class="team">BALLPARK</div>
+            <div class="muted">Good Evening, Trevor!</div>
+          </div>
+          <div class="card">
+            <div class="sub-title">Tomorrow</div>
+            <div class="game-row">
+              <span>Sep 8, 2026 · Yankees @ Blue Jays</span>
+              <span class="chip">Ready soon</span>
+            </div>
+            <div class="btn-row">
+              <button class="btn secondary">Check In Next Day</button>
+              <button class="btn secondary">Add to Wallet</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sub-title">Upcoming games</div>
+            <div class="game-row"><span>Athletics vs Blue Jays</span><span class="muted">Sep 13</span></div>
+          </div>
+        </div>
+        <div class="bottom-tab">
+          <div class="tab-item active">Home</div>
+          <div class="tab-item" data-step="tickets">Tickets</div>
+          <div class="tab-item">Food</div>
+          <div class="tab-item">Profile</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="screen-wrap">
+      <div class="screen-label">My Tickets</div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>◉</span></div>
+        <div class="content">
+          <div class="tabs">
+            <button class="active">Active</button>
+            <button>Past</button>
+          </div>
+          <div class="card">
+            <div class="sub-title">Yankees @ Blue Jays</div>
+            <div class="muted">Tue Sep 8 · Rogers Centre</div>
+            <div class="ticket-outline"></div>
+            <div class="ticket-metrics">
+              <div class="metric">SEC<strong>112</strong></div>
+              <div class="metric">ROW<strong>6</strong></div>
+              <div class="metric">SEAT<strong>10</strong></div>
+            </div>
+            <button class="btn" data-step="authorize">Authorize Ticket</button>
+            <div class="btn-row">
+              <button class="btn secondary">Add to Wallet</button>
+              <button class="btn secondary">Print</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn secondary">Transfer</button>
+              <button class="btn danger">Sell</button>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-tab">
+          <div class="tab-item">Home</div>
+          <div class="tab-item active">Tickets</div>
+          <div class="tab-item">Food</div>
+          <div class="tab-item">Profile</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="screen-wrap">
+      <div class="screen-label">Authorization</div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>◉</span></div>
+        <div class="content">
+          <div class="card">
+            <div class="sub-title">Securely authorize your ticket</div>
+            <div class="provider-box">
+              <div class="provider-pill">Ticketmaster Identity</div>
+              <button class="btn secondary">Sign in with Password</button>
+              <button class="btn success" id="faceAuthBtn">Enable Face ID</button>
+            </div>
+            <p class="muted" style="margin-top: 8px">
+              Link your account one time to securely sync barcodes and reduce fraud.
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="screen-wrap">
+      <div class="screen-label">Ticket Authorized</div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>◉</span></div>
+        <div class="content">
+          <div class="qr-wrap">
+            <div class="qr"></div>
+            <div class="big-state">Your tickets are now ready for entry!</div>
+            <p class="muted" style="margin-top: 6px">
+              Present this rotating QR code at the gate.
+            </p>
+            <button class="btn" style="margin-top: 8px" data-step="gameday">View Ticket</button>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="screen-wrap">
+      <div class="screen-label">Home - Game Day</div>
+      <div class="phone">
+        <div class="status"><span>8:41</span><span>◉</span></div>
+        <div class="content">
+          <div class="card hero">
+            <div class="team">BALLPARK</div>
+            <div class="muted">Good Evening Trevor</div>
+          </div>
+          <div class="card">
+            <div class="sub-title">Today</div>
+            <div class="game-row">
+              <span>Sep 8, 2026 · Yankees @ Blue Jays</span>
+              <span class="chip" style="background:#dcfce7;color:#166534;border-color:#bbf7d0;">Authorized ✓</span>
+            </div>
+            <div class="btn-row">
+              <button class="btn secondary">Today's Activities</button>
+              <button class="btn secondary">AI Concierge</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sub-title">Upcoming Games</div>
+            <div class="game-row"><span>Athletics @ Blue Jays</span><span class="muted">Sep 13</span></div>
+          </div>
+        </div>
+        <div class="bottom-tab">
+          <div class="tab-item">Home</div>
+          <div class="tab-item active" data-step="gate">Tickets</div>
+          <div class="tab-item">Food</div>
+          <div class="tab-item">Profile</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="screen-wrap">
+      <div class="screen-label">Gate Ready Tickets</div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>◉</span></div>
+        <div class="content">
+          <div class="qr-wrap">
+            <div class="sub-title">Gate Ready Tickets</div>
+            <div class="qr"></div>
+            <div class="big-state">New York Yankees @ Blue Jays</div>
+            <p class="muted">First pitch 7:07PM · Enjoy the game!</p>
+            <button class="btn success">Close</button>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="screen-wrap" style="margin-top: 14px">
+    <div class="face-modal" id="faceModal">
+      <div class="face-icon">🧾</div>
+      <strong>Face ID</strong>
+      <div style="font-size: 0.75rem; margin-top: 2px">Authorizing with Face ID</div>
+      <div class="spinner"></div>
+    </div>
+  </section>
+
+  <section class="controls">
+    <button class="btn" data-jump="start">Start at Notification</button>
+    <button class="btn" data-jump="authorize">Jump to Authorization</button>
+    <button class="btn" data-jump="ready">Jump to Gate Ready</button>
+  </section>
+  <div class="hint">Prototype interactions: tap notification, authorize ticket, enable Face ID, then view ticket.</div>
+
+  <script>
+    const order = ["notification", "pre", "tickets", "authorize", "authorized", "gameday", "gate"];
+    let step = "notification";
+    const notifTap = document.getElementById("notifTap");
+    const faceBtn = document.getElementById("faceAuthBtn");
+    const faceModal = document.getElementById("faceModal");
+    const jumpBtns = document.querySelectorAll("[data-jump]");
+    const routeBtns = document.querySelectorAll("[data-step]");
+
+    const labels = {
+      notification: 0,
+      pre: 1,
+      tickets: 2,
+      authorize: 3,
+      authorized: 4,
+      gameday: 5,
+      gate: 6,
+    };
+
+    function setStep(next) {
+      step = next;
+      document.querySelectorAll(".phone").forEach((el, i) => {
+        el.style.outline = i === labels[next] ? "3px solid #93c5fd" : "none";
+        el.style.transform = i === labels[next] ? "translateY(-2px)" : "translateY(0)";
+        el.style.transition = "200ms ease";
+      });
+    }
+
+    notifTap?.addEventListener("click", () => setStep("pre"));
+
+    routeBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const next = btn.getAttribute("data-step");
+        if (!next) return;
+        setStep(next);
+      });
+    });
+
+    faceBtn?.addEventListener("click", () => {
+      setStep("authorize");
+      faceModal.classList.add("active");
+      setTimeout(() => {
+        faceModal.classList.remove("active");
+        setStep("authorized");
+      }, 1800);
+    });
+
+    jumpBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const to = btn.getAttribute("data-jump");
+        if (to === "start") setStep("notification");
+        if (to === "authorize") setStep("authorize");
+        if (to === "ready") setStep("gate");
+      });
+    });
+
+    setStep("notification");
+    setInterval(() => {
+      const qr = document.querySelectorAll(".qr");
+      qr.forEach((cell) => {
+        const shift = Math.floor(Math.random() * 20);
+        cell.style.filter = `hue-rotate(${shift}deg) contrast(${1 + Math.random() * 0.08})`;
+      });
+    }, 2500);
+  </script>
+</body>
+</html>
