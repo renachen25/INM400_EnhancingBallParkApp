@@ -1,0 +1,25 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "serve . -l 4173",
+    "start": "serve . -l 4173"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/renachen25/INM400_EnhancingBallParkApp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/renachen25/INM400_EnhancingBallParkApp/issues"
+  },
+  "homepage": "https://github.com/renachen25/INM400_EnhancingBallParkApp#readme",
+  "devDependencies": {
+    "serve": "^14.2.6"
+  }
+}
